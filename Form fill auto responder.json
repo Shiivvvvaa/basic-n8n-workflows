@@ -1,0 +1,161 @@
+{
+  "name": "Form fill auto responder",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Send inquiry",
+        "formDescription": "this form allows the user to send an inquiry",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Name",
+              "placeholder": "Shiv",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email",
+              "placeholder": "shiv@genomaton.com",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "What's your inquiry?",
+              "placeholder": "I wanna know the price range for the 2024 Porsche models,",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "6f915d51-3f00-4f88-9c02-65e01959c410",
+      "name": "On form submission",
+      "webhookId": "ebf54e1c-3b87-4df0-a462-fbcbd20c2801"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=their name is{{ $json.Name }}, and their inquiry is \" {{ $json['What\\'s your inquiry?'] }}\"."
+            },
+            {
+              "content": "You are a helpful assistant for a car dealership company. \n\nYou'll receive inquiries from customers as in input, and you just have to answer them. \n\nREMEMBER, the output should only contain the reply sentence, no extra BS.",
+              "role": "system"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        224,
+        0
+      ],
+      "id": "b9154b4a-b1db-41cf-90d7-b8d55a9eff23",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "F0TmuaSMAhWVpncC",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        544,
+        0
+      ],
+      "id": "d27efe56-8b1d-4df5-8984-97c25c3a7b46",
+      "name": "Wait",
+      "webhookId": "b9532279-0dea-4208-9647-2765c5c8673a"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('On form submission').item.json.Email }}",
+        "subject": "Inquiry assistance",
+        "emailType": "text",
+        "message": "={{ $json.message.content }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        736,
+        0
+      ],
+      "id": "8dd9d8f7-6b45-4e44-90e4-6337e2722809",
+      "name": "Send a message",
+      "webhookId": "f9586666-97f9-4325-b15b-0538032bec32",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "uXS45rYCOba6Y116",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "09392268-5ca5-49c3-9272-4384d5f8b48c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b850b2ec6298353b213df5691b230f20698bc7d222e8f8e20aedeaef497246bf"
+  },
+  "id": "RJ82zSeTuH2Ve5rF",
+  "tags": []
+}
