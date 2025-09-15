@@ -1,0 +1,441 @@
+{
+  "name": "Calendar booking automation",
+  "nodes": [
+    {
+      "parameters": {
+        "events": [
+          "BOOKING_CREATED"
+        ],
+        "options": {}
+      },
+      "type": "n8n-nodes-base.calTrigger",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "c49a5bd6-880a-4631-9a88-7a2a001f8086",
+      "name": "Cal.com Trigger",
+      "webhookId": "30a090d1-0674-4f56-b870-8e014b98259a",
+      "credentials": {
+        "calApi": {
+          "id": "pIAjHOXY2Q5poLOk",
+          "name": "Cal account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=The person's name is  {{ $json.attendees[0].name }}.\nThey've booked an appointment for date at time. {{ $json.startTime }}\n"
+            },
+            {
+              "content": "you're a personal assistant for Shivansh. \n\nFor each appointment that gets booked into Shivansh's calendar, you have to prepare a confirmation message for the person that their appointment is successfully booked.\n\nYou'll be given the attendee's name and the time for the appointment(in ISO 8601 format) as an input message.\n\nAlso, generate a link for the attendee to add this event into their google calendar, and include that link in the message.",
+              "role": "system"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        208,
+        0
+      ],
+      "id": "4f4f02a6-4e12-4d36-979b-a92343375c3e",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "F0TmuaSMAhWVpncC",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Cal.com Trigger').item.json.attendees[0].email }}",
+        "subject": "={{ $('Cal.com Trigger').item.json.title }}",
+        "emailType": "text",
+        "message": "={{ $json.message.content }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        560,
+        0
+      ],
+      "id": "3ec5b148-c2a2-48fc-a457-226cb84dd0aa",
+      "name": "Send a message",
+      "webhookId": "b100bfec-c1bc-4d44-815e-fc131bf15d92",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "uXS45rYCOba6Y116",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "email": "={{ $('Cal.com Trigger').item.json.attendees[0].email }}\n",
+        "additionalFields": {
+          "firstName": "={{ $('Cal.com Trigger').item.json.attendees[0].name }}"
+        },
+        "options": {
+          "resolveData": false
+        }
+      },
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.2,
+      "position": [
+        768,
+        0
+      ],
+      "id": "2282265d-8f1b-4d4a-a8a2-e9c4000ec1f8",
+      "name": "Create or update a contact",
+      "credentials": {
+        "hubspotOAuth2Api": {
+          "id": "IgIvw1vRrAXscrd2",
+          "name": "HubSpot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "subtractFromDate",
+        "magnitude": "={{ $('Cal.com Trigger').item.json.startTime }}",
+        "timeUnit": "hours",
+        "duration": 24,
+        "options": {
+          "includeInputFields": false
+        }
+      },
+      "type": "n8n-nodes-base.dateTime",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        0
+      ],
+      "id": "c79ab502-da9e-4859-a460-27ae3a8393bc",
+      "name": "Date & Time"
+    },
+    {
+      "parameters": {
+        "resume": "specificTime",
+        "dateTime": "={{ $json.newDate }}"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1296,
+        0
+      ],
+      "id": "09df3657-8b28-4af9-a3f9-e5fb0cb5f682",
+      "name": "Wait",
+      "webhookId": "f65e8252-48fa-48bd-ab8c-6fd94101b681"
+    },
+    {
+      "parameters": {
+        "resource": "thread",
+        "operation": "reply",
+        "threadId": "={{ $('Send a message').item.json.threadId }}",
+        "messageId": "={{ $('Send a message').item.json.id }}",
+        "message": "=Reminder {{ $('Cal.com Trigger').item.json.attendees[0].name }}, our call is in 24 hours.\n\nCan I trust you to be on time?",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1568,
+        0
+      ],
+      "id": "770cfe44-925c-4d06-842e-dd40b2d5ce76",
+      "name": "Reply to a message",
+      "webhookId": "b85afd47-d660-49cb-bcf3-e0542ee65eef",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "uXS45rYCOba6Y116",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "thread",
+        "operation": "reply",
+        "threadId": "={{ $('Send a message').item.json.threadId }}",
+        "messageId": "={{ $('Send a message').item.json.id }}",
+        "message": "=Reminder {{ $('Cal.com Trigger').item.json.attendees[0].name }}, our call is in 3 hours.\n\nCan I trust you to be on time?",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2368,
+        0
+      ],
+      "id": "7fabbb4f-4765-47c7-84d8-3e4a92278073",
+      "name": "Reply to a message1",
+      "webhookId": "b85afd47-d660-49cb-bcf3-e0542ee65eef",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "uXS45rYCOba6Y116",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "thread",
+        "operation": "reply",
+        "threadId": "={{ $('Send a message').item.json.threadId }}",
+        "messageId": "={{ $('Send a message').item.json.id }}",
+        "message": "=Reminder {{ $('Cal.com Trigger').item.json.attendees[0].name }}, our call is in an hour\n\nCan I trust you to be on time?",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        3296,
+        0
+      ],
+      "id": "03e54dd8-4e43-4db4-aee0-bc7c8644dacd",
+      "name": "Reply to a message2",
+      "webhookId": "b85afd47-d660-49cb-bcf3-e0542ee65eef",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "uXS45rYCOba6Y116",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "subtractFromDate",
+        "magnitude": "={{ $('Cal.com Trigger').item.json.startTime }}",
+        "timeUnit": "hours",
+        "duration": 3,
+        "outputFieldName": "newDate1",
+        "options": {
+          "includeInputFields": false
+        }
+      },
+      "type": "n8n-nodes-base.dateTime",
+      "typeVersion": 2,
+      "position": [
+        1840,
+        0
+      ],
+      "id": "6a2c9304-7404-40d3-82a7-9ecd0f31c4d1",
+      "name": "Date & Time1"
+    },
+    {
+      "parameters": {
+        "resume": "specificTime",
+        "dateTime": "={{ $json.newDate1 }}"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2096,
+        0
+      ],
+      "id": "4190d818-32c1-40b7-a11c-782a46d7d767",
+      "name": "Wait1",
+      "webhookId": "f65e8252-48fa-48bd-ab8c-6fd94101b681"
+    },
+    {
+      "parameters": {
+        "operation": "subtractFromDate",
+        "magnitude": "={{ $('Cal.com Trigger').item.json.startTime }}",
+        "timeUnit": "hours",
+        "duration": 1,
+        "outputFieldName": "newDate2",
+        "options": {
+          "includeInputFields": false
+        }
+      },
+      "type": "n8n-nodes-base.dateTime",
+      "typeVersion": 2,
+      "position": [
+        2656,
+        0
+      ],
+      "id": "1487875c-73cb-41a5-b08f-cfc3cb72abba",
+      "name": "Date & Time2"
+    },
+    {
+      "parameters": {
+        "resume": "specificTime",
+        "dateTime": "={{ $json.newDate2 }}"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2960,
+        0
+      ],
+      "id": "0606fc2a-b640-4c53-9480-04d1f07f1362",
+      "name": "Wait2",
+      "webhookId": "f65e8252-48fa-48bd-ab8c-6fd94101b681"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Cal.com Trigger": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Create or update a contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create or update a contact": {
+      "main": [
+        [
+          {
+            "node": "Date & Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Date & Time": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Reply to a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reply to a message": {
+      "main": [
+        [
+          {
+            "node": "Date & Time1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reply to a message1": {
+      "main": [
+        [
+          {
+            "node": "Date & Time2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Date & Time1": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Reply to a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Date & Time2": {
+      "main": [
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait2": {
+      "main": [
+        [
+          {
+            "node": "Reply to a message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ecc9c113-5b1c-46e8-82f4-3b4399dc030d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b850b2ec6298353b213df5691b230f20698bc7d222e8f8e20aedeaef497246bf"
+  },
+  "id": "scdqe5mgXy4dFOdo",
+  "tags": []
+}
