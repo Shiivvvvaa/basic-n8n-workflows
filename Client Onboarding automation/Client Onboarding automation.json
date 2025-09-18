@@ -1,0 +1,466 @@
+{
+  "name": "Client Onboarding automation",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Client Onboarding ",
+        "formDescription": "Please ensure to fill out this form correctly. ",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Name ",
+              "placeholder": "Your name ",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email ",
+              "placeholder": "Your email ",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "What is your company name?",
+              "placeholder": "e.g. Genomaton Ai ",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "What is your current monthly revenue? ",
+              "placeholder": "e.g. $400,000",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "What goals do you look forward to achieve with our partnership?",
+              "placeholder": "Your desired goals",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Any additional information you want us to know",
+              "placeholder": "e.g. I don't like donuts. "
+            }
+          ]
+        },
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        16,
+        32
+      ],
+      "id": "7f26718e-6b19-48bd-b61d-24114c8c895b",
+      "name": "On form submission",
+      "webhookId": "ade39373-d54d-4fac-bf8a-6c600ed72a13"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Email receiver information- \n\nname: {{ $json['Name '] }},\nEmail:{{ $json['Email '] }},\ntheir company name: {{ $json['What is your company name?'] }},\ndesired goals: {{ $json['What goals do you look forward to achieve with our partnership?'] }},\ncurrent monthly revenue:{{ $json['What is your current monthly revenue? '] }},\nadditional information:{{ $json['Any additional information you want us to know'] }}",
+        "options": {
+          "systemMessage": "Your job is to create a warm welcome email for a company that is being onboarded into our Agency. \n\nAll the personalized information about the email receiver will be given to you. \n\nI don't want you to generate the email with any credential left with [your name] or [your company name], etc.\nThe email sender is Shivansh, the company is Genomaton AI, and he is the Co-Founder.\n\nAt the end of the message, include this \"kick-off meeting\" booking link: (https://cal.com/shivanshbisht/discoverycall)"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        -256
+      ],
+      "id": "e2f75196-127a-4b9b-83dc-4d581a5049fb",
+      "name": "AI Agent",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "gpt-4o"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        224,
+        -96
+      ],
+      "id": "db9489df-6dc6-4641-acd7-389bd6827cd2",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "SM4qSRP6PjD24Yag",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "Parse the incoming data into the following format:\n\nSubject: \nBody:",
+              "role": "system"
+            },
+            {
+              "content": "={{ $json.output }}"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        512,
+        -144
+      ],
+      "id": "27424c95-6804-4659-97df-696ab7de386c",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "SM4qSRP6PjD24Yag",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('On form submission').item.json['Email '] }}",
+        "subject": "={{ $json.message.content.Subject }}",
+        "emailType": "text",
+        "message": "={{ $json.message.content.Body }}",
+        "options": {
+          "appendAttribution": false,
+          "ccList": "worktester008@gmail.com"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        864,
+        -224
+      ],
+      "id": "51ce5128-6154-4c47-9092-45bb6f74575b",
+      "name": "Send a message",
+      "webhookId": "183eefa6-9750-4c5e-92b8-9613a5bba0c9",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "uXS45rYCOba6Y116",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1zy4W4eG09HIlBQGIQXLlNSK1xg8d81PZsPRqtApeIAE",
+          "mode": "list",
+          "cachedResultName": "Client onboarding form",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zy4W4eG09HIlBQGIQXLlNSK1xg8d81PZsPRqtApeIAE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zy4W4eG09HIlBQGIQXLlNSK1xg8d81PZsPRqtApeIAE/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $json['Name '] }}",
+            "Email": "={{ $json['Email '] }}",
+            "Company Name": "={{ $json['What is your company name?'] }}",
+            "Current Revenue": "={{ $json['What is your current monthly revenue? '] }}",
+            "Desired Goals": "={{ $json['What goals do you look forward to achieve with our partnership?'] }}",
+            "Additional information": "={{ $json['Any additional information you want us to know'] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company Name",
+              "displayName": "Company Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Current Revenue",
+              "displayName": "Current Revenue",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Desired Goals",
+              "displayName": "Desired Goals",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Additional information",
+              "displayName": "Additional information",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        352,
+        160
+      ],
+      "id": "e4062f17-a6d2-4dfb-9ee1-79b544400ae4",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "iNkZqAm8iPeImIiV",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "GPT-4O"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "Your task is to summarize the following information about a prospect with the necessary details highlighted. \n\n",
+              "role": "system"
+            },
+            {
+              "content": "=their current revenue:  {{ $json['Current Revenue'] }}\n\ntheir desired goals: \" {{ $json['Desired Goals'] }} \"\n\nadditional information about them: \"{{ $json['Additional information'] }} \""
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        544,
+        160
+      ],
+      "id": "a99dfc03-e829-408c-b43a-0bcf3c47639d",
+      "name": "Message a model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "SM4qSRP6PjD24Yag",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pageId": {
+          "__rl": true,
+          "value": "https://www.notion.so/Active-clients-progress-hub-272983bacce0807789e6dfcbb49144b3?source=copy_link",
+          "mode": "url"
+        },
+        "title": "={{ $('On form submission').item.json['What is your company name?'] }}",
+        "blockUi": {
+          "blockValues": [
+            {
+              "type": "heading_2",
+              "textContent": "={{ $('On form submission').item.json['Name '] }}\n"
+            },
+            {
+              "type": "heading_2",
+              "textContent": "={{ $('On form submission').item.json['Email '] }}"
+            },
+            {
+              "type": "heading_3",
+              "textContent": "=\n\n{{ $json.message.content }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        896,
+        160
+      ],
+      "id": "a44cb0e4-ce01-45be-aa1c-675de71425ab",
+      "name": "Create a page",
+      "credentials": {
+        "notionApi": {
+          "id": "7p1YLJ4hJpeSOBdq",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "worktester008@gmail.com",
+        "subject": "New Client successfully onboarded!",
+        "emailType": "text",
+        "message": "=Hi Tester,\n\nA new client has just been onboarded into the database. \n\nThey have been sent a welcome email and a Notion page to manage their information is successfully created. \n\nThe knowledge is also added to the google sheets database.\n\nYou can find the welcome mail to them CC'ed to you.\nHere's some information about them: \n\nName:{{ $('On form submission').item.json['Name '] }}\nEmail: {{ $('On form submission').item.json['Email '] }}\nCompany: {{ $('On form submission').item.json['What is your company name?'] }}\nCurrent monthly revenue:{{ $('On form submission').item.json['What is your current monthly revenue? '] }}\nDesired goals: {{ $('On form submission').item.json['What goals do you look forward to achieve with our partnership?'] }}\n\nhere's the link to their Notion page:{{ $json.url }}\n\nThey have been sent the meeting booking link too.\n\nThanks.\n\n",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1104,
+        160
+      ],
+      "id": "b6ad8127-1749-4864-9850-e5877c77a938",
+      "name": "Send a message1",
+      "webhookId": "3c976553-2360-4d2b-8f63-17405bbb629e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "uXS45rYCOba6Y116",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Message a model1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model1": {
+      "main": [
+        [
+          {
+            "node": "Create a page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a page": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "78459bef-ab94-4be2-a6b7-80e09ea15779",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b850b2ec6298353b213df5691b230f20698bc7d222e8f8e20aedeaef497246bf"
+  },
+  "id": "AbynPpNPwudbEcVR",
+  "tags": []
+}
