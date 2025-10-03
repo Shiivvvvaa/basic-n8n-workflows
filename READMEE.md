@@ -12,20 +12,20 @@
 ## 2. Operational Procedures (SOPs)
 
 ### Front Desk Operations
-####Check-In Protocol:
+#### Check-In Protocol:
 - Verify guest identity against booking.
 - Confirm stay duration and payment method.
 - Offer upsell options (room upgrades, packages) only if inventory permits.
 - Provide keycard, Wi-Fi credentials, and property guide.
 - Record any special requests in PMS (Property Management System).
 
-####Check-Out Protocol:
+#### Check-Out Protocol:
 - Verify charges (room, F&B, extras).
 - Confirm billing method, print receipt.
 - Ask for feedback (digital survey or in-person).
 - Log lost/damaged items if applicable.
 
-####Guest Complaints Escalation Matrix:
+#### Guest Complaints Escalation Matrix:
 - Level 1: Front Desk Agent – handle minor issues (e.g., missing amenities).
 - Level 2: Front Office Supervisor – unresolved complaints within 10 minutes.
 - Level 3: Front Office Manager – serious complaints or VIP guests.
